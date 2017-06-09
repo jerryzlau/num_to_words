@@ -1,29 +1,27 @@
-require "byebug"
-class Fixnum
 
-  def in_words
-    if self == 0 #zero case
-      return "zero"
-    elsif self < 10
-      UNIT[self]
-    elsif self < 20
-      TEENS[self]
-    elsif self < 100
-      self.less_than_hundred
-    else
-      mag = MAGNITUDES.keys.select { |mag| mag <= self }.max
-      mag_words = (self/mag).in_words + " " + MAGNITUDES[mag]
-      (self%mag) != 0 ? mag_words + " " + (self%mag).in_words : mag_words
+class Integer
+
+  def in_words(recursive=false)
+    case self.to_s
+    when /\b0\b/          then "zero" unless recursive
+    when /\b\d\b/         then UNIT[self]
+    when /\b1\d\b/        then TEENS[self]
+    when /\b\d{2}\b/
+      tens = self.floor(-1)
+      "#{TENS[tens]} #{(self-tens).in_words(true)}".rstrip
+    when /\b\d{3}\b/
+      hundreds = self.floor(-2)
+      "#{UNIT[hundreds/100]} hundred #{(self-hundreds).in_words(true)}".rstrip
+    when /\b\d{4,15}\b/
+      blocks = (self.to_s.length-1)/3
+      grand = self.floor(-blocks*3)
+      "#{(grand/1_000**blocks).in_words(true)} #{MAGNITUDES[1_000**blocks]} #{(self-grand).in_words(true)}".rstrip
+    else "Nooo"
     end
   end
 
-  def less_than_hundred
-    unit = self%10
-    ten = self-unit
-    unit == 0 ? TENS[self] : TENS[ten] + " " + UNIT[unit]
-  end
-
-  UNIT = {
+  UNIT ||= {
+    0 => "zero",
     1 => "one",
     2 => "two",
     3 => "three",
@@ -34,7 +32,7 @@ class Fixnum
     8 => "eight",
     9 => "nine"
   }
-  TEENS = {
+  TEENS ||= {
     10 => "ten",
     11 => "eleven",
     12 => "twelve",
@@ -46,7 +44,7 @@ class Fixnum
     18 => "eighteen",
     19 => "nineteen"
   }
-  TENS = {
+  TENS ||= {
     20 => "twenty",
     30 => "thirty",
     40 => "forty",
@@ -57,7 +55,7 @@ class Fixnum
     90 => "ninety"
   }
 
-  MAGNITUDES = {
+  MAGNITUDES ||= {
     100 => "hundred",
     1000 => "thousand",
     1_000_000 => "million",
